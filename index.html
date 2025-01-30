@@ -5,45 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculatrice de Rentabilité Immobilière</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #121212; color: #ffffff; text-align: center; }
-        .container { max-width: 800px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 0 15px rgba(255, 255, 255, 0.2); }
-        label, input, button { display: block; width: 100%; margin-bottom: 10px; }
-        input { background: #333; color: #fff; border: 1px solid #555; padding: 10px; border-radius: 5px; }
-        button { background: #28a745; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 5px; font-size: 16px; }
-        button:hover { background: #218838; }
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #121212; color: #ffffff; }
+        .container { display: flex; justify-content: space-between; max-width: 1200px; margin: auto; }
+        .panel { width: 45%; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 0 15px rgba(255, 255, 255, 0.2); }
+        .panel label, .panel input, .panel button { display: block; width: 100%; margin-bottom: 10px; }
+        .panel input { background: #333; color: #fff; border: 1px solid #555; padding: 10px; border-radius: 5px; }
+        .panel button { background: #28a745; color: white; border: none; padding: 12px; cursor: pointer; border-radius: 5px; font-size: 16px; }
+        .panel button:hover { background: #218838; }
+        .panel h3 { margin-top: 0; }
+
+        .result { font-weight: bold; margin-top: 20px; text-align: center; font-size: 18px; }
+        .right-panel { width: 50%; padding: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #222; border-radius: 10px; overflow: hidden; }
         th, td { border: 1px solid #444; padding: 12px; text-align: center; }
         th { background-color: #007BFF; color: white; }
         .good { background-color: #28a745; }
         .bad { background-color: #dc3545; }
-        .result { font-weight: bold; margin-top: 20px; text-align: center; font-size: 18px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>📈 Calculatrice de Rentabilité Immobilière</h2>
-        <label>Montant du bien (€) : <input type="number" id="montantBien" value="135000"></label>
-        <label>Loyer mensuel (€) : <input type="number" id="loyerMensuel" value="875"></label>
-        <label>Taxe foncière (€) : <input type="number" id="taxeFonc" value="1000"></label>
-        <label>Charges annuelles (€) : <input type="number" id="chargesAnn" value="0"></label>
-        <label>Apport initial (€) : <input type="number" id="apport" value="10000"></label>
-        <label>Taux d'intérêt annuel (%) : <input type="number" id="tauxInteret" value="3.2"></label>
-        <label>Durée du prêt (années) : <input type="number" id="dureePret" value="25"></label>
-        <button onclick="calculerRentabilite()">💰 Calculer</button>
-        <div class="result" id="resultat"></div>
+        <!-- Panel gauche avec les paramètres -->
+        <div class="panel">
+            <h3>⚙️ Paramètres de calcul</h3>
+            <label>* Montant du bien (€) : <input type="number" id="montantBien" value="135000"></label>
+            <label>* Loyer mensuel (€) : <input type="number" id="loyerMensuel" value="875"></label>
+            <label>* Taxe foncière (€) : <input type="number" id="taxeFonc" value="1000"></label>
+            <label>Charges annuelles (€) : <input type="number" id="chargesAnn" value="0"></label>
+            <label>* Apport initial (€) : <input type="number" id="apport" value="10000"></label>
+            <label>* Taux d'intérêt annuel (%) : <input type="number" id="tauxInteret" value="3.2"></label>
+            <label>* Durée du prêt (années) : <input type="number" id="dureePret" value="25"></label>
+            <button onclick="calculerRentabilite()">💰 Calculer</button>
+        </div>
 
-        <h3>📊 Tableau de rentabilité</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Prix du Bien (€)</th>
-                    <th>Rendement Brut (%)</th>
-                    <th>Rendement Net (%)</th>
-                    <th>Cashflow (€)</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
+        <!-- Panel droit avec résumé et tableau -->
+        <div class="right-panel">
+            <div class="result" id="resultat"></div>
+            <h3>📊 Tableau de rentabilité</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Prix du Bien (€)</th>
+                        <th>Rendement Brut (%)</th>
+                        <th>Rendement Net (%)</th>
+                        <th>Cashflow (€)</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+            <div class="result" id="resultatPrix"></div>
+        </div>
     </div>
 
     <script>
@@ -61,12 +72,12 @@
             let mensualite = (montantEmprunte * (tauxInteret / 12)) / (1 - Math.pow(1 + (tauxInteret / 12), -dureePret * 12));
             let cashflow = (loyerMensuel - (mensualite + (taxeFonc / 12) + (chargesAnn / 12))).toFixed(2);
 
-            document.getElementById('resultat').innerHTML = 
+            document.getElementById('resultat').innerHTML = `
                 <p>✅ Rendement Brut : ${(loyerAnnuel / montantBien * 100).toFixed(2)}%</p>
                 <p>✅ Rendement Net : ${((loyerAnnuel - taxeFonc - chargesAnn) / montantBien * 100).toFixed(2)}%</p>
                 <p>📉 Mensualité du prêt : ${mensualite.toFixed(2)} €</p>
                 <p>💵 Cashflow mensuel : ${cashflow} €</p>
-            ;
+            `;
             
             let tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = '';
@@ -74,7 +85,7 @@
                 let rendementB = (loyerAnnuel / i) * 100;
                 let rendementN = ((loyerAnnuel - taxeFonc - chargesAnn) / i) * 100;
                 let className = rendementB >= 10 ? 'good' : rendementB < 5 ? 'bad' : '';
-                tableBody.innerHTML += <tr class="${className}"><td>${i.toFixed(2)}</td><td>${rendementB.toFixed(2)}%</td><td>${rendementN.toFixed(2)}%</td><td>${cashflow} €</td></tr>;
+                tableBody.innerHTML += `<tr class="${className}"><td>${i.toFixed(2)}</td><td>${rendementB.toFixed(2)}%</td><td>${rendementN.toFixed(2)}%</td><td>${cashflow} €</td></tr>`;
             }
         }
 
@@ -82,7 +93,7 @@
             let rendementVoulue = parseFloat(document.getElementById('rendementVoulue').value) / 100;
             let loyerAnnuel = parseFloat(document.getElementById('loyerMensuel').value) * 12;
             let prixVoulue = loyerAnnuel / rendementVoulue;
-            document.getElementById('resultatPrix').innerHTML = 🎯 Prix du bien estimé : ${prixVoulue.toFixed(2)} €;
+            document.getElementById('resultatPrix').innerHTML = `🎯 Prix du bien estimé : ${prixVoulue.toFixed(2)} €`;
         }
     </script>
 </body>
