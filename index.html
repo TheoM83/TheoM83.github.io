@@ -36,6 +36,11 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
             text-align: center;
         }
+        .panel h3, .right-panel h3 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #007BFF;
+        }
         .panel label, .panel input, .panel button {
             display: block;
             width: 80%;
@@ -74,7 +79,37 @@
             font-size: 18px;
             color: #ffffff;
         }
-        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table th, table td {
+            padding: 12px;
+            border: 1px solid #555;
+            text-align: center;
+        }
+        table th {
+            background-color: #007BFF;
+            color: white;
+        }
+        table tr:nth-child(even) {
+            background-color: #2e2e2e;
+        }
+        table tr:nth-child(odd) {
+            background-color: #1e1e1e;
+        }
+        table tr.good {
+            background-color: #28a745;
+            color: white;
+        }
+        table tr.bad {
+            background-color: #dc3545;
+            color: white;
+        }
+        .table-container {
+            margin-top: 40px;
+        }
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -94,7 +129,6 @@
     <div class="container">
         <!-- Panel gauche avec les paramètres -->
         <div class="panel">
-            <h3>⚙️ Paramètres de calcul</h3>
             <label>🏠 Montant du bien (€) : <input type="number" id="montantBien"></label>
             <label>💶 Loyer mensuel (€) : <input type="number" id="loyerMensuel"></label>
             <label>🏛️ Taxe foncière (€) : <input type="number" id="taxeFonc"></label>
@@ -102,6 +136,7 @@
             <label>💰 Apport initial (€) : <input type="number" id="apport"></label>
             <label>📈 Taux d'intérêt annuel (%) : <input type="number" id="tauxInteret"></label>
             <label>⏳ Durée du prêt (années) : <input type="number" id="dureePret"></label>
+            <label>🛠️ Frais de gestion (%) : <input type="number" id="fraisGestion"></label>
             <button onclick="calculerRentabilite()">🚀 Calculer</button>
             <button class="share-button" onclick="copierFiche()">🔗 Copier le lien de la fiche</button>
         </div>
@@ -109,18 +144,20 @@
         <!-- Panel droit avec résumé et tableau -->
         <div class="right-panel">
             <div class="result" id="resultat"></div>
-            <h3>📊 Tableau de rentabilité</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>🏠 Prix du Bien (€)</th>
-                        <th>📈 Rendement Brut (%)</th>
-                        <th>📉 Rendement Net (%)</th>
-                        <th>💵 Cashflow (€)</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-            </table>
+            <div class="table-container">
+                <h3>📊 Tableau de rentabilité</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>🏠 Prix du Bien (€)</th>
+                            <th>📈 Rendement Brut (%)</th>
+                            <th>📉 Rendement Net (%)</th>
+                            <th>💵 Cashflow (€)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
             <div class="result" id="resultatPrix"></div>
         </div>
     </div>
@@ -128,7 +165,7 @@
     <script>
         function updateFieldsFromURL() {
             const params = new URLSearchParams(window.location.search);
-            let fields = ['montantBien', 'loyerMensuel', 'taxeFonc', 'chargesAnn', 'apport', 'tauxInteret', 'dureePret'];
+            let fields = ['montantBien', 'loyerMensuel', 'taxeFonc', 'chargesAnn', 'apport', 'tauxInteret', 'dureePret', 'fraisGestion'];
             fields.forEach(field => {
                 let value = params.get(field);
                 if (value !== null) {
@@ -148,21 +185,29 @@
             let apport = parseFloat(document.getElementById('apport').value);
             let tauxInteret = parseFloat(document.getElementById('tauxInteret').value) / 100;
             let dureePret = parseInt(document.getElementById('dureePret').value);
+            let fraisGestion = parseFloat(document.getElementById('fraisGestion').value) / 100;
+
+            if (isNaN(montantBien) || isNaN(loyerMensuel) || isNaN(taxeFonc) || isNaN(chargesAnn) || isNaN(apport) || isNaN(tauxInteret) || isNaN(dureePret) || isNaN(fraisGestion)) {
+                alert('Veuillez remplir tous les champs correctement.');
+                return;
+            }
 
             let loyerAnnuel = loyerMensuel * 12;
 
-            // Calculate monthly tax and charges
+            // Calculate monthly tax, charges, and management fees
             let monthlyTaxeFonc = taxeFonc / 12;
             let monthlyCharges = chargesAnn / 12;
+            let monthlyFraisGestion = (loyerMensuel * fraisGestion);
 
             // Calculate initial cashflow for the main result
             let montantEmprunte = montantBien - apport;
             let mensualite = (montantEmprunte * (tauxInteret / 12)) / (1 - Math.pow(1 + (tauxInteret / 12), -dureePret * 12));
-            let cashflow = (loyerMensuel - (mensualite + monthlyTaxeFonc + monthlyCharges)).toFixed(2);
+            let cashflow = (loyerMensuel - (mensualite + monthlyTaxeFonc + monthlyCharges + monthlyFraisGestion)).toFixed(2);
 
             document.getElementById('resultat').innerHTML = `
+                <h3>🎯 Résumé</h3>
                 <p>📈 Rendement Brut : ${(loyerAnnuel / montantBien * 100).toFixed(2)}%</p>
-                <p>📉 Rendement Net : ${((loyerAnnuel - taxeFonc - chargesAnn) / montantBien * 100).toFixed(2)}%</p>
+                <p>📉 Rendement Net : ${((loyerAnnuel - taxeFonc - chargesAnn - (loyerAnnuel * fraisGestion)) / montantBien * 100).toFixed(2)}%</p>
                 <p>💸 Mensualité du prêt : ${mensualite.toFixed(2)} €</p>
                 <p>💰 Cashflow mensuel : ${cashflow} €</p>
             `;
@@ -170,23 +215,20 @@
             // Generate table rows
             let tableBody = document.getElementById('tableBody');
             tableBody.innerHTML = '';
-            for (let i = montantBien; i >= montantBien * 0.8; i -= 2500) {
-                // Recalculate loan amount and monthly payment for each row
-                let montantEmprunteRow = i - apport;
+            for (let i = 0; i < 10; i++) {
+                let prixBien = montantBien - (i * 2500);
+                let montantEmprunteRow = prixBien - apport;
                 let mensualiteRow = (montantEmprunteRow * (tauxInteret / 12)) / (1 - Math.pow(1 + (tauxInteret / 12), -dureePret * 12));
-                let cashflowRow = (loyerMensuel - (mensualiteRow + monthlyTaxeFonc + monthlyCharges)).toFixed(2);
+                let cashflowRow = (loyerMensuel - (mensualiteRow + monthlyTaxeFonc + monthlyCharges + (loyerMensuel * fraisGestion))).toFixed(2);
 
-                // Calculate rendement brut and net
-                let rendementB = (loyerAnnuel / i) * 100;
-                let rendementN = ((loyerAnnuel - taxeFonc - chargesAnn) / i) * 100;
+                let rendementB = (loyerAnnuel / prixBien) * 100;
+                let rendementN = ((loyerAnnuel - taxeFonc - chargesAnn - (loyerAnnuel * fraisGestion)) / prixBien) * 100;
 
-                // Determine row class based on rendement brut
-                let className = rendementB >= 10 ? 'good' : rendementB < 5 ? 'bad' : '';
+                let prixBienClass = cashflowRow < 0 ? 'bad' : 'good';
 
-                // Add row to the table
                 tableBody.innerHTML += `
-                    <tr class="${className}">
-                        <td>${i.toFixed(2)}</td>
+                    <tr>
+                        <td class="${prixBienClass}">${prixBien.toFixed(2)}</td>
                         <td>${rendementB.toFixed(2)}%</td>
                         <td>${rendementN.toFixed(2)}%</td>
                         <td>${cashflowRow} €</td>
@@ -198,7 +240,7 @@
         function copierFiche() {
             const url = new URL(window.location);
             const params = new URLSearchParams();
-            let fields = ['montantBien', 'loyerMensuel', 'taxeFonc', 'chargesAnn', 'apport', 'tauxInteret', 'dureePret'];
+            let fields = ['montantBien', 'loyerMensuel', 'taxeFonc', 'chargesAnn', 'apport', 'tauxInteret', 'dureePret', 'fraisGestion'];
             fields.forEach(field => {
                 params.set(field, document.getElementById(field).value);
             });
